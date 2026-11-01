@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-const API_URL = "https://online-event-registration-k02e.onrender.com/api/registrations";
+const API_URL =
+  "https://online-event-registration-k02e.onrender.com/api/registrations";
 
 function App() {
   const [registrations, setRegistrations] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -14,21 +16,16 @@ function App() {
     date: ""
   });
 
-  const [editingId, setEditingId] = useState(null);
-
-  // GET - Load registrations from MongoDB through the backend
   const fetchRegistrations = async () => {
     try {
       const response = await fetch(API_URL);
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to load registrations");
-      }
+      if (!response.ok) throw new Error("Failed to load registrations");
 
       setRegistrations(data);
     } catch (error) {
-      console.error("Error fetching registrations:", error);
+      console.error(error);
     }
   };
 
@@ -36,7 +33,6 @@ function App() {
     fetchRegistrations();
   }, []);
 
-  // Handle form input
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -44,55 +40,47 @@ function App() {
     });
   };
 
-  // POST - Create / PUT - Update registration
+  const resetForm = () => {
+    setEditingId(null);
+    setFormData({
+      name: "",
+      email: "",
+      event: "",
+      date: ""
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const url = editingId
-        ? `${API_URL}/${editingId}`
-        : API_URL;
-
-      const response = await fetch(url, {
-        method: editingId ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await fetch(
+        editingId ? `${API_URL}/${editingId}` : API_URL,
+        {
+          method: editingId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        }
+      );
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.message || result.error || "Unable to save registration"
-        );
+        throw new Error(result.message || result.error || "Unable to save");
       }
 
       alert(
         result.message ||
-        (editingId
-          ? "Registration updated successfully!"
-          : "Registration created successfully!")
+        (editingId ? "Registration updated!" : "Registration successful!")
       );
 
-      setEditingId(null);
-
-      setFormData({
-        name: "",
-        email: "",
-        event: "",
-        date: ""
-      });
-
-      await fetchRegistrations();
+      resetForm();
+      fetchRegistrations();
     } catch (error) {
-      console.error("Error saving registration:", error);
       alert("Error: " + error.message);
     }
   };
 
-  // Edit - Fill the form with existing registration details
   const handleEdit = (registration) => {
     setEditingId(registration._id);
 
@@ -103,19 +91,13 @@ function App() {
       date: registration.date
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // DELETE - Remove registration
   const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this registration?"
-    );
-
-    if (!confirmed) return;
+    if (!window.confirm("Are you sure you want to cancel this registration?")) {
+      return;
+    }
 
     try {
       const response = await fetch(`${API_URL}/${id}`, {
@@ -125,139 +107,181 @@ function App() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.message || result.error || "Unable to delete registration"
-        );
+        throw new Error(result.message || result.error || "Unable to delete");
       }
 
-      if (editingId === id) {
-        setEditingId(null);
-        setFormData({
-          name: "",
-          email: "",
-          event: "",
-          date: ""
-        });
-      }
+      if (editingId === id) resetForm();
 
       await fetchRegistrations();
-      alert(result.message || "Registration deleted successfully!");
+      alert(result.message || "Registration cancelled!");
     } catch (error) {
-      console.error("Error deleting registration:", error);
       alert("Error: " + error.message);
     }
   };
 
-  // Cancel editing and clear the form
-  const handleCancelEdit = () => {
-    setEditingId(null);
-
-    setFormData({
-      name: "",
-      email: "",
-      event: "",
-      date: ""
-    });
-  };
-
   return (
-    <div className="container">
-      <h1>Online Event Registration</h1>
+    <div className="app">
 
-      <p className="subtitle">
-        Register for your favorite events
-      </p>
+      <nav className="navbar">
+        <div className="logo">EVENT<span>HUB.</span></div>
+        <a href="#register" className="nav-link">Register Now ↗</a>
+      </nav>
 
-      <form onSubmit={handleSubmit} className="registration-form">
-        <input
-          type="text"
-          name="name"
-          placeholder="Enter your name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
+      <header className="hero">
+        <div className="hero-content">
+          <p className="hero-tag">DISCOVER · CONNECT · EXPERIENCE</p>
+          <h1>Make Every<br />Moment <span>Count.</span></h1>
+          <p className="hero-description">
+            Discover exciting events, connect with people,
+            and create unforgettable experiences.
+          </p>
+          <a href="#register" className="hero-button">
+            Explore Events ↓
+          </a>
+        </div>
+      </header>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+      <section className="events-section">
+        <div className="section-heading">
+          <p className="eyebrow">WHAT'S HAPPENING</p>
+          <h2>Explore Our Events</h2>
+          <p>Find your next opportunity to learn, create and connect.</p>
+        </div>
 
-        <select
-          name="event"
-          value={formData.event}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Event</option>
-          <option value="Tech Fest">Tech Fest</option>
-          <option value="AI Workshop">AI Workshop</option>
-          <option value="Web Development Workshop">
-            Web Development Workshop
-          </option>
-          <option value="Hackathon">Hackathon</option>
-        </select>
-
-        <input
-          type="date"
-          name="date"
-          value={formData.date}
-          onChange={handleChange}
-          required
-        />
-
-        <button type="submit">
-          {editingId ? "Update Registration" : "Register"}
-        </button>
-
-        {editingId && (
-          <button type="button" onClick={handleCancelEdit}>
-            Cancel Editing
-          </button>
-        )}
-      </form>
-
-      <h2>Registered Participants</h2>
-
-      <div className="registrations">
-        {registrations.map((registration) => (
-          <div className="card" key={registration._id}>
-            <h3>{registration.name}</h3>
-
-            <p>
-              <strong>Email:</strong> {registration.email}
-            </p>
-
-            <p>
-              <strong>Event:</strong> {registration.event}
-            </p>
-
-            <p>
-              <strong>Date:</strong> {registration.date}
-            </p>
-
-            <button
-              type="button"
-              className="edit"
-              onClick={() => handleEdit(registration)}
-            >
-              Edit
-            </button>
-
-            <button
-              type="button"
-              className="delete"
-              onClick={() => handleDelete(registration._id)}
-            >
-              Cancel
-            </button>
+        <div className="event-grid">
+          <div className="event-tile tech">
+            <span>01 / TECHNOLOGY</span>
+            <h3>Tech Fest</h3>
           </div>
-        ))}
-      </div>
+
+          <div className="event-tile workshop">
+            <span>02 / LEARNING</span>
+            <h3>AI Workshop</h3>
+          </div>
+
+          <div className="event-tile hackathon">
+            <span>03 / INNOVATION</span>
+            <h3>Hackathon</h3>
+          </div>
+        </div>
+      </section>
+
+      <section className="registration-section" id="register">
+        <div className="form-intro">
+          <p className="eyebrow">SAVE YOUR SPOT</p>
+          <h2>{editingId ? "Update Your Registration" : "Join The Experience."}</h2>
+          <p>Fill in your details to reserve your place at an event.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="registration-form">
+          <label>Full Name</label>
+          <input
+            type="text"
+            name="name"
+            placeholder="Enter your name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Email Address</label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Select Event</label>
+          <select
+            name="event"
+            value={formData.event}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Choose an event</option>
+            <option value="Tech Fest">Tech Fest</option>
+            <option value="AI Workshop">AI Workshop</option>
+            <option value="Web Development Workshop">
+              Web Development Workshop
+            </option>
+            <option value="Hackathon">Hackathon</option>
+          </select>
+
+          <label>Event Date</label>
+          <input
+            type="date"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+            required
+          />
+
+          <button type="submit" className="submit-button">
+            {editingId ? "Update Registration →" : "Complete Registration →"}
+          </button>
+
+          {editingId && (
+            <button
+              type="button"
+              className="cancel-edit"
+              onClick={resetForm}
+            >
+              Cancel Editing
+            </button>
+          )}
+        </form>
+      </section>
+
+      <section className="participants-section">
+        <div className="section-heading">
+          <p className="eyebrow">COMMUNITY</p>
+          <h2>Registered Participants</h2>
+          <p>People who have already joined the experience.</p>
+        </div>
+
+        <div className="registrations">
+          {registrations.length === 0 ? (
+            <p className="empty-message">No registrations yet. Be the first!</p>
+          ) : (
+            registrations.map((registration) => (
+              <div className="participant-card" key={registration._id}>
+                <div className="participant-info">
+                  <h3>{registration.name}</h3>
+                  <p>{registration.email}</p>
+                  <span>{registration.event}</span>
+                  <p className="participant-date">Date: {registration.date}</p>
+                </div>
+
+                <div className="participant-actions">
+                  <button
+                    className="edit"
+                    onClick={() => handleEdit(registration)}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    className="delete"
+                    onClick={() => handleDelete(registration._id)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      <footer>
+        <div className="logo">EVENT<span>HUB.</span></div>
+        <p>Creating experiences. Connecting people.</p>
+        <small>© 2026 EventHub. All rights reserved.</small>
+      </footer>
+
     </div>
   );
 }

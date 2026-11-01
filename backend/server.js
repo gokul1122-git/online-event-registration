@@ -13,6 +13,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Health check for Render
+app.get("/healthz", (req, res) => {
+    res.status(200).send("API is healthy");
+});
 // Health check
 app.get("/", (req, res) => {
     res.send("Event Registration API is running");
