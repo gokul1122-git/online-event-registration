@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-const API_URL = "http://localhost:3000/api/registrations";
+const API_URL = "https://online-event-registration-k02e.onrender.com/api/registrations";
 
 function App() {
   const [registrations, setRegistrations] = useState([]);
