@@ -1,15 +1,22 @@
 
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const Registration = require("./models/Registration");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Health check
+app.get("/", (req, res) => {
+    res.send("Event Registration API is running");
+});
 
 // Request logger
 app.use((req, res, next) => {
@@ -19,22 +26,29 @@ app.use((req, res, next) => {
     next();
 });
 
-// Connect to MongoDB and start the server
+// Connect to MongoDB Atlas and start server
 async function startServer() {
     try {
-        await mongoose.connect("mongodb://127.0.0.1:27017/eventDB");
+        const MONGODB_URI = process.env.MONGODB_URI;
 
-        console.log("MongoDB Connected Successfully");
+        if (!MONGODB_URI) {
+            throw new Error("MONGODB_URI is missing in .env file");
+        }
+
+        await mongoose.connect(MONGODB_URI);
+
+        console.log("MongoDB Atlas Connected Successfully");
 
         app.listen(PORT, () => {
             console.log(`Event Registration API running on port ${PORT}`);
         });
     } catch (error) {
         console.error("MongoDB Connection Failed:", error.message);
+        process.exit(1);
     }
 }
 
-// CREATE: Save a registration
+// CREATE
 app.post("/api/registrations", async (req, res) => {
     try {
         const registration = await Registration.create({
@@ -56,7 +70,7 @@ app.post("/api/registrations", async (req, res) => {
     }
 });
 
-// READ: Get all registrations
+// READ
 app.get("/api/registrations", async (req, res) => {
     try {
         const registrations = await Registration.find().sort({ _id: -1 });
@@ -66,7 +80,7 @@ app.get("/api/registrations", async (req, res) => {
     }
 });
 
-// UPDATE: Edit a registration
+// UPDATE
 app.put("/api/registrations/:id", async (req, res) => {
     try {
         const registration = await Registration.findByIdAndUpdate(
@@ -81,7 +95,9 @@ app.put("/api/registrations/:id", async (req, res) => {
         );
 
         if (!registration) {
-            return res.status(404).json({ message: "Registration not found" });
+            return res.status(404).json({
+                message: "Registration not found"
+            });
         }
 
         res.json({
@@ -93,7 +109,7 @@ app.put("/api/registrations/:id", async (req, res) => {
     }
 });
 
-// DELETE: Remove a registration
+// DELETE
 app.delete("/api/registrations/:id", async (req, res) => {
     try {
         const registration = await Registration.findByIdAndDelete(
@@ -101,10 +117,14 @@ app.delete("/api/registrations/:id", async (req, res) => {
         );
 
         if (!registration) {
-            return res.status(404).json({ message: "Registration not found" });
+            return res.status(404).json({
+                message: "Registration not found"
+            });
         }
 
-        res.json({ message: "Registration deleted successfully" });
+        res.json({
+            message: "Registration deleted successfully"
+        });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
